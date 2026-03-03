@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    volumes:
+      - app-data:/app/uploads
+      - db-data:/app
+    restart: unless-stopped
+
+volumes:
+  app-data:
+  db-data:

@@ -9,3 +9,6 @@
 | Resolution cố định Full HD | User yêu cầu, giảm phức tạp UI                  | UI             | 2026-03-03 |
 | Prompt/Seed ẩn khỏi UI     | User yêu cầu, giữ UI tối giản                   | UI             | 2026-03-03 |
 | Dark theme + glassmorphism | Phù hợp AI/video context, modern                | Design         | 2026-03-03 |
+| Cloudflare Tunnel          | Expose ComfyUI an toàn, miễn phí, không mở port | Networking     | 2026-03-03 |
+| Railway.app cloud deploy   | Dễ deploy, Docker native, auto-deploy từ GitHub  | Infrastructure | 2026-03-03 |
+| Env vars thay hardcode     | Bảo mật, flexible giữa dev/prod                 | Config         | 2026-03-03 |

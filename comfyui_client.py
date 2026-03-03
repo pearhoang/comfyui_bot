@@ -3,6 +3,7 @@ Module giao tiếp với ComfyUI API.
 Upload ảnh, build prompt, queue job, listen progress, lấy output.
 """
 
+import os
 import json
 import random
 import asyncio
@@ -17,13 +18,28 @@ from config import WORKFLOW_PATH, WORKFLOW_DEFAULTS
 logger = logging.getLogger("comfyui_client")
 
 
+# ── Cloudflare Access headers (nếu tunnel có bật auth) ─────
+
+def _get_tunnel_headers() -> dict:
+    """Trả về headers cho Cloudflare Access Service Token (nếu có)."""
+    cf_id = os.environ.get("CF_ACCESS_CLIENT_ID", "")
+    cf_secret = os.environ.get("CF_ACCESS_CLIENT_SECRET", "")
+    if cf_id and cf_secret:
+        return {
+            "CF-Access-Client-Id": cf_id,
+            "CF-Access-Client-Secret": cf_secret,
+        }
+    return {}
+
+
 # ── Health check ────────────────────────────────────────────
 
 
 async def check_server(server_url: str, timeout: float = 5) -> bool:
     """Kiểm tra ComfyUI server có online không."""
     try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        headers = _get_tunnel_headers()
+        async with httpx.AsyncClient(timeout=timeout, headers=headers) as client:
             r = await client.get(f"{server_url}/system_stats")
             return r.status_code == 200
     except Exception:
@@ -35,7 +51,8 @@ async def check_server(server_url: str, timeout: float = 5) -> bool:
 
 async def upload_image(server_url: str, image_path: str, filename: str) -> str:
     """Upload ảnh lên ComfyUI, trả về tên file trên server."""
-    async with httpx.AsyncClient(timeout=60) as client:
+    headers = _get_tunnel_headers()
+    async with httpx.AsyncClient(timeout=60, headers=headers) as client:
         with open(image_path, "rb") as f:
             r = await client.post(
                 f"{server_url}/upload/image",
@@ -86,7 +103,8 @@ def build_prompt(image_name: str, seed: int | None = None) -> dict:
 
 async def queue_prompt(server_url: str, prompt: dict, client_id: str) -> str:
     """Submit prompt vào ComfyUI queue, trả về prompt_id."""
-    async with httpx.AsyncClient(timeout=30) as client:
+    headers = _get_tunnel_headers()
+    async with httpx.AsyncClient(timeout=30, headers=headers) as client:
         r = await client.post(
             f"{server_url}/prompt",
             json={"prompt": prompt, "client_id": client_id},
@@ -129,6 +147,7 @@ async def listen_progress(
     try:
         async with websockets.connect(
             ws_url,
+            additional_headers=_get_tunnel_headers(),
             ping_interval=30,
             ping_timeout=120,
             max_size=50 * 1024 * 1024,  # 50MB cho binary frames
@@ -261,7 +280,8 @@ async def listen_progress(
 
 async def get_history(server_url: str, prompt_id: str) -> dict:
     """Lấy history output sau khi prompt chạy xong."""
-    async with httpx.AsyncClient(timeout=30) as client:
+    headers = _get_tunnel_headers()
+    async with httpx.AsyncClient(timeout=30, headers=headers) as client:
         r = await client.get(f"{server_url}/history/{prompt_id}")
         r.raise_for_status()
         return r.json()
@@ -309,7 +329,8 @@ async def download_output(server_url: str, output_info: dict) -> bytes:
         "subfolder": output_info.get("subfolder", ""),
         "type": output_info.get("type", "output"),
     }
-    async with httpx.AsyncClient(timeout=300) as client:
+    headers = _get_tunnel_headers()
+    async with httpx.AsyncClient(timeout=300, headers=headers) as client:
         r = await client.get(f"{server_url}/view", params=params)
         r.raise_for_status()
         return r.content

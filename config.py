@@ -10,13 +10,21 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ============================================================
 # ComfyUI Servers
-# DEV  (4090) : chỉ 1 server
-# PROD (5090) : bỏ comment dòng gpu2
+# DEV  : http://127.0.0.1:8188 (mặc định)
+# PROD : set env COMFYUI_BASE_URL=https://comfy.yourdomain.com
+# Multi-GPU: set COMFYUI_SERVERS_JSON (JSON array)
 # ============================================================
-COMFYUI_SERVERS = [
-    {"id": "gpu1", "url": "http://127.0.0.1:8288", "name": "GPU #1"},
-    # {"id": "gpu2", "url": "http://127.0.0.1:8288", "name": "RTX 5090 #2"},
-]
+_COMFYUI_URL = os.environ.get("COMFYUI_BASE_URL", "http://127.0.0.1:8188")
+
+# Hỗ trợ multi-GPU qua JSON env (optional)
+_SERVERS_JSON = os.environ.get("COMFYUI_SERVERS_JSON", "")
+if _SERVERS_JSON:
+    import json as _json
+    COMFYUI_SERVERS = _json.loads(_SERVERS_JSON)
+else:
+    COMFYUI_SERVERS = [
+        {"id": "gpu1", "url": _COMFYUI_URL, "name": "GPU #1"},
+    ]
 
 # ============================================================
 # Paths
@@ -34,9 +42,10 @@ JWT_EXPIRE_HOURS = 24
 
 # ============================================================
 # Default Admin (tự tạo lần đầu chạy)
+# ⚠️ Production: set env ADMIN_PASSWORD
 # ============================================================
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"  # ⚠️ Đổi trong production!
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
 # ============================================================
 # Workflow defaults (cố định — không cho user thay đổi)

@@ -1,0 +1,10 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+uploads/
+comfybot.db
+.env
+docs/
+*.md
+.gitignore
